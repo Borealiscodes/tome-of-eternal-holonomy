@@ -14,10 +14,10 @@ const BAYER_4X4 = Uint8Array.of(
 export function buildCosmologyCLUT8() {
   const lut = new Uint32Array(256);
   const ramps = Array.of(
-    Array.of(235,  22,  38), // 0: Chattur'gha (Deep Crimson)
-    Array.of( 28, 115, 245), // 1: Ulyaoth (Eldritch Cobalt)
-    Array.of( 26, 220, 110), // 2: Xel'lotath (Necrotic Emerald)
-    Array.of(165,  52, 235)  // 3: Mantorok (Void Violet)
+    Array.of(235,  24,  42), // 0: Chattur'gha (Crimson)
+    Array.of( 30, 120, 248), // 1: Ulyaoth (Cobalt)
+    Array.of( 28, 224, 112), // 2: Xel'lotath (Emerald)
+    Array.of(170,  58, 240)  // 3: Mantorok (Void Violet)
   );
 
   for (let bank = 0; bank < 4; bank++) {
@@ -26,11 +26,10 @@ export function buildCosmologyCLUT8() {
     const baseG = ramp.at(1);
     const baseB = ramp.at(2);
     for (let i = 0; i < 64; i++) {
-      // Deep obsidian shadows at low indices, glowing incandescence at high indices
       const curve = (i * i) >> 6;
-      const r = Math.min(255, ((baseR * curve) >> 6) + (i > 52 ? (i - 52) * 18 : 0));
-      const g = Math.min(255, ((baseG * curve) >> 6) + (i > 52 ? (i - 52) * 18 : 0));
-      const b = Math.min(255, ((baseB * curve) >> 6) + (i > 52 ? (i - 52) * 18 : 0));
+      const r = Math.min(255, ((baseR * curve) >> 6) + (i > 50 ? (i - 50) * 16 : 0));
+      const g = Math.min(255, ((baseG * curve) >> 6) + (i > 50 ? (i - 50) * 16 : 0));
+      const b = Math.min(255, ((baseB * curve) >> 6) + (i > 50 ? (i - 50) * 16 : 0));
       lut[(bank << 6) + i] = (255 << 24) | (b << 16) | (g << 8) | r;
     }
   }
@@ -44,7 +43,6 @@ export class RetroFramebuffer {
     this.rgba32 = new Uint32Array(FB_WIDTH * FB_HEIGHT);
   }
 
-  /** Render warped Bezier manifold with radial vignette & high-contrast Bayer dithering */
   renderTidalSurface(patch, dominantAlign = ALIGN.MANTOROK, dirichletEnergyQ16 = 0) {
     const bankOffset = (dominantAlign & 3) << 6;
     const stepX = 16;
@@ -85,27 +83,24 @@ export class RetroFramebuffer {
         const bot = h01 + (((h11 - h01) * fx) >> 4);
         const h = top + (((bot - top) * fy) >> 4);
 
-        // Radial vignette so the outer void falls into deep abyssal shadow
         const dx = x - cx;
         const distSq = ((dx * dx) >> 5) + dy2;
-        const vignette = q16Clamp(26 - (distSq >> 6), 2, 26);
+        const vignette = q16Clamp(28 - (distSq >> 6), 3, 28);
 
-        // Amplify wave displacement + Dirichlet topological contour ridges
-        const waveBoost = (h >> 9) + ((dirichletEnergyQ16 >> 13) & 7);
-        const contour = Math.abs((h >> 10) & 7) === 0 ? 6 : 0;
-        const baseShade = q16Clamp(vignette + waveBoost + contour, 1, 52);
+        const waveBoost = (h >> 8) + ((dirichletEnergyQ16 >> 13) & 7);
+        const contour = Math.abs((h >> 9) & 7) === 0 ? 7 : 0;
+        const baseShade = q16Clamp(vignette + waveBoost + contour, 2, 52);
 
         const threshold = BAYER_4X4[bayerRow + (x & 3)];
         this.indices[rowOff + x] = bankOffset + q16Clamp(baseShade + (threshold >> 1), 1, 63);
       }
     }
 
-    // Draw warped manifold lattice lines deformed by Bezier height
-    const latticeColor = bankOffset + 24;
-    for (let gy = 2; gy < rows - 2; gy += 2) {
-      for (let gx = 2; gx < cols - 3; gx += 2) {
-        const h0 = grid[gy * cols + gx] >> 11;
-        const h1 = grid[gy * cols + (gx + 2)] >> 11;
+    const latticeColor = bankOffset + 26;
+    for (let gy = 1; gy < rows - 1; gy += 2) {
+      for (let gx = 1; gx < cols - 2; gx += 2) {
+        const h0 = grid[gy * cols + gx] >> 10;
+        const h1 = grid[gy * cols + (gx + 2)] >> 10;
         this.drawLine(gx * stepX, gy * stepY + h0, (gx + 2) * stepX, gy * stepY + h1, latticeColor);
       }
     }
@@ -159,34 +154,32 @@ export class RetroFramebuffer {
     }
   }
 
-  /** Draw distinct Eternal Darkness geometric sigil inside each rune node */
   drawRuneGlyph(cx, cy, runeId, colorIdx) {
     const r = 8;
-    // Outer medallic seal
     this.drawCircleOutline(cx, cy, r + 3, colorIdx - 10, 16);
 
     switch (runeId) {
-      case 'CHATTURGHA': // Jagged crimson claw / downward Fang triad
+      case 'CHATTURGHA':
         this.drawLine(cx - r, cy - 4, cx, cy + r, colorIdx);
         this.drawLine(cx + r, cy - 4, cx, cy + r, colorIdx);
         this.drawLine(cx, cy - r, cx, cy + r, colorIdx);
         this.drawLine(cx - 5, cy - 2, cx + 5, cy - 2, colorIdx);
         break;
-      case 'ULYAOTH': // Astral diamond & central all-seeing eye
+      case 'ULYAOTH':
         this.drawLine(cx, cy - r, cx + r, cy, colorIdx);
         this.drawLine(cx + r, cy, cx, cy + r, colorIdx);
         this.drawLine(cx, cy + r, cx - r, cy, colorIdx);
         this.drawLine(cx - r, cy, cx, cy - r, colorIdx);
         this.drawCircleOutline(cx, cy, 3, colorIdx, 10);
         break;
-      case 'XELLOTATH': // Twin split mind-crescents & asymmetric fork
+      case 'XELLOTATH':
         this.drawLine(cx - 6, cy - r, cx - 2, cy, colorIdx);
         this.drawLine(cx - 2, cy, cx - 6, cy + r, colorIdx);
         this.drawLine(cx + 6, cy - r, cx + 2, cy, colorIdx);
         this.drawLine(cx + 2, cy, cx + 6, cy + r, colorIdx);
         this.drawLine(cx - 2, cy, cx + 2, cy, colorIdx);
         break;
-      case 'MANTOROK': // Binding chaos cross & locked void square
+      case 'MANTOROK':
         this.drawLine(cx - r, cy - r, cx + r, cy + r, colorIdx);
         this.drawLine(cx + r, cy - r, cx - r, cy + r, colorIdx);
         this.drawLine(cx - 4, cy - 4, cx + 4, cy - 4, colorIdx);
@@ -194,37 +187,37 @@ export class RetroFramebuffer {
         this.drawLine(cx + 4, cy + 4, cx - 4, cy + 4, colorIdx);
         this.drawLine(cx - 4, cy + 4, cx - 4, cy - 4, colorIdx);
         break;
-      case 'PARGON': // 8-ray radiant power star
+      case 'PARGON':
         this.drawLine(cx - r, cy, cx + r, cy, colorIdx);
         this.drawLine(cx, cy - r, cx, cy + r, colorIdx);
         this.drawLine(cx - 6, cy - 6, cx + 6, cy + 6, colorIdx);
         this.drawLine(cx + 6, cy - 6, cx - 6, cy + 6, colorIdx);
         break;
-      case 'ANTORBOK': // Outward projection arrow
+      case 'ANTORBOK':
         this.drawLine(cx, cy + r, cx, cy - r, colorIdx);
         this.drawLine(cx - 5, cy - 2, cx, cy - r, colorIdx);
         this.drawLine(cx + 5, cy - 2, cx, cy - r, colorIdx);
         break;
-      case 'BANKOROK': // Protective ward shield
+      case 'BANKOROK':
         this.drawLine(cx - 6, cy - 6, cx + 6, cy - 6, colorIdx);
         this.drawLine(cx - 6, cy - 6, cx - 6, cy + 2, colorIdx);
         this.drawLine(cx + 6, cy - 6, cx + 6, cy + 2, colorIdx);
         this.drawLine(cx - 6, cy + 2, cx, cy + r, colorIdx);
         this.drawLine(cx + 6, cy + 2, cx, cy + r, colorIdx);
         break;
-      case 'TIER': // Summoning gateway portal
+      case 'TIER':
         this.drawLine(cx - 5, cy + r, cx - 5, cy - 5, colorIdx);
         this.drawLine(cx - 5, cy - 5, cx + 5, cy - 5, colorIdx);
         this.drawLine(cx + 5, cy - 5, cx + 5, cy + r, colorIdx);
         this.drawLine(cx, cy - 2, cx, cy + 5, colorIdx);
         break;
-      case 'NAROKATH': // Inward absorption spiral/hourglass
+      case 'NAROKATH':
         this.drawLine(cx - 6, cy - 6, cx + 6, cy + 6, colorIdx);
         this.drawLine(cx + 6, cy - 6, cx - 6, cy + 6, colorIdx);
         this.drawLine(cx - 6, cy - 6, cx + 6, cy - 6, colorIdx);
         this.drawLine(cx - 6, cy + 6, cx + 6, cy + 6, colorIdx);
         break;
-      default: // Nouns (Redgormor, Magormor, Aretak): Inscribed triangle + core
+      default:
         this.drawLine(cx, cy - r, cx + r, cy + 6, colorIdx);
         this.drawLine(cx + r, cy + 6, cx - r, cy + 6, colorIdx);
         this.drawLine(cx - r, cy + 6, cx, cy - r, colorIdx);
