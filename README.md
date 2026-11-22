@@ -1,6 +1,6 @@
 # 👁️ Tome of Eternal Holonomy (`Q16.16` Cosmology & Runic Engine)
 
-> 🚧 **UNDER CONSTRUCTION** 🚧  
+> ✨ **PLAYABLE ALPHA (`v0.1.0`)** ✨  
 > *Core `Q16.16` cellular sheaf kernel, De Casteljau rune-drawing surface, and dissonant Karplus-Strong waveguide synth are currently in active pre-alpha scaffolding.*
 
 A **zero-float, deterministic cosmology and runic magick engine** inspired by *Eternal Darkness: Sanity's Requiem*. 
@@ -85,7 +85,7 @@ tome-of-eternal-holonomy/
 ## 🛠️ Roadmap & Status
 
 - [x] **Phase 0:** Architectural synthesis (`Q16.16` Sheaf + Bezier Brush + Karplus-Strong specs)
-- [ ] **Phase 1:** `src/core/` — `Q16.16` arithmetic, Bhaskara LUT, and 4-Alignment Sheaf solver
-- [ ] **Phase 2:** `src/physics/` — Interactive `4×4` De Casteljau rune-drawing canvas & Circle of Power
-- [ ] **Phase 3:** `src/audio/` — Dissonant Karplus-Strong waveguide & LFSR incantation whispers
-- [ ] **Phase 4:** `src/render/` — `480×272` `CLUT8` Bayer-dithered renderer & `Ledger 2` Sanity hallucinations
+- [x] **Phase 1:** `src/core/` — `Q16.16` arithmetic, Bhaskara LUT, and 4-Alignment Sheaf solver
+- [x] **Phase 2:** `src/physics/` — Interactive `4×4` De Casteljau rune-drawing canvas & Circle of Power
+- [x] **Phase 3:** `src/audio/` — Dissonant Karplus-Strong waveguide & LFSR incantation whispers
+- [x] **Phase 4:** `src/render/` — `480×272` `CLUT8` Bayer-dithered renderer & `Ledger 2` Sanity hallucinations
