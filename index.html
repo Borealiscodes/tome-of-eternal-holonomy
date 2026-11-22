@@ -131,7 +131,7 @@
     const audioBtn = document.getElementById('audio-btn');
     const resetBtn = document.getElementById('reset-btn');
 
-    let circle = new CircleOfPower(5);
+    window.onerror = (m) => { document.getElementById("telemetry").textContent = "ERR: " + m; }; let circle = new CircleOfPower(5);
     let dominantAlign = ALIGN.MANTOROK;
     const fb = new RetroFramebuffer();
     const hallucinator = new SanityHallucinator();

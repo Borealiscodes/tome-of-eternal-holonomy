@@ -5,7 +5,7 @@ export class BezierTidalPatch {
     this.heights = new Int32Array(16);
     this.velocities = new Int32Array(16);
     this.stiffnessQ16 = 2400;
-    this.dampingQ16 = 61800; // ~0.943 long eerie ripples
+    this.dampingQ16 = 61800;
     this.phase = 0;
   }
 
@@ -26,7 +26,6 @@ export class BezierTidalPatch {
   step() {
     this.phase = (this.phase + 2800) | 0;
     for (let i = 0; i < 16; i++) {
-      // Subtle ambient eldritch tide on interior control points
       const wave = q16Sin(this.phase + (i * 29000)) >> 5;
       const h = this.heights[i];
       const accel = -q16Mul(h, this.stiffnessQ16) + wave;
@@ -49,10 +48,10 @@ export class BezierTidalPatch {
 
   evaluate(uQ16, vQ16) {
     const h = this.heights;
-    const col0 = BezierTidalPatch.evalCubic1D(h[0],  h[1],  h[2],  h[3],  uQ16);
-    const col1 = BezierTidalPatch.evalCubic1D(h[4],  h[5],  h[6],  h[7],  uQ16);
-    const col2 = BezierTidalPatch.evalCubic1D(h[8],  h[9],  h[10], h[11], uQ16);
-    const col3 = BezierTidalPatch.evalCubic1D(h[12], h[13], h[14], h[15], uQ16);
+    const col0 = BezierTidalPatch.evalCubic1D(h.at(0),  h.at(1),  h.at(2),  h.at(3),  uQ16);
+    const col1 = BezierTidalPatch.evalCubic1D(h.at(4),  h.at(5),  h.at(6),  h.at(7),  uQ16);
+    const col2 = BezierTidalPatch.evalCubic1D(h.at(8),  h.at(9),  h.at(10), h.at(11), uQ16);
+    const col3 = BezierTidalPatch.evalCubic1D(h.at(12), h.at(13), h.at(14), h.at(15), uQ16);
 
     return BezierTidalPatch.evalCubic1D(col0, col1, col2, col3, vQ16);
   }
