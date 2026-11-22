@@ -1,11 +1,12 @@
-import { Q16_ONE, Q16_HALF, q16Mul, q16Clamp } from '../core/q16.js';
+import { Q16_ONE, Q16_HALF, q16Mul, q16Clamp, q16Sin } from '../core/q16.js';
 
 export class BezierTidalPatch {
   constructor() {
     this.heights = new Int32Array(16);
     this.velocities = new Int32Array(16);
-    this.stiffnessQ16 = 3276; // ~0.05
-    this.dampingQ16 = 60293;  // ~0.92
+    this.stiffnessQ16 = 2400;
+    this.dampingQ16 = 61800; // ~0.943 long eerie ripples
+    this.phase = 0;
   }
 
   applyBrushImpulse(uQ16, vQ16, forceQ16) {
@@ -23,9 +24,12 @@ export class BezierTidalPatch {
   }
 
   step() {
+    this.phase = (this.phase + 2800) | 0;
     for (let i = 0; i < 16; i++) {
+      // Subtle ambient eldritch tide on interior control points
+      const wave = q16Sin(this.phase + (i * 29000)) >> 5;
       const h = this.heights[i];
-      const accel = -q16Mul(h, this.stiffnessQ16);
+      const accel = -q16Mul(h, this.stiffnessQ16) + wave;
       this.velocities[i] = q16Mul(this.velocities[i] + accel, this.dampingQ16);
       this.heights[i] = q16Clamp(h + this.velocities[i], -Q16_ONE * 2, Q16_ONE * 2);
     }
@@ -45,9 +49,9 @@ export class BezierTidalPatch {
 
   evaluate(uQ16, vQ16) {
     const h = this.heights;
-    const col0 = BezierTidalPatch.evalCubic1D(h[0], h[1], h[2], h[3], uQ16);
-    const col1 = BezierTidalPatch.evalCubic1D(h[4], h[5], h[6], h[7], uQ16);
-    const col2 = BezierTidalPatch.evalCubic1D(h[8], h[9], h[10], h[11], uQ16);
+    const col0 = BezierTidalPatch.evalCubic1D(h[0],  h[1],  h[2],  h[3],  uQ16);
+    const col1 = BezierTidalPatch.evalCubic1D(h[4],  h[5],  h[6],  h[7],  uQ16);
+    const col2 = BezierTidalPatch.evalCubic1D(h[8],  h[9],  h[10], h[11], uQ16);
     const col3 = BezierTidalPatch.evalCubic1D(h[12], h[13], h[14], h[15], uQ16);
 
     return BezierTidalPatch.evalCubic1D(col0, col1, col2, col3, vQ16);

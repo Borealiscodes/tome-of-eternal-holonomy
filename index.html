@@ -7,7 +7,7 @@
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
-      background: #07050a;
+      background: #050308;
       color: #d8cce8;
       font-family: monospace;
       display: flex;
@@ -16,14 +16,14 @@
       padding: 12px;
       gap: 10px;
     }
-    h1 { font-size: 1.1rem; letter-spacing: 0.08em; color: #c48cff; text-align: center; }
+    h1 { font-size: 1.05rem; letter-spacing: 0.08em; color: #c48cff; text-align: center; }
     #viewport-wrap {
       position: relative;
       width: 100%;
       max-width: 720px;
       aspect-ratio: 480 / 272;
       border: 2px solid #3c2459;
-      box-shadow: 0 0 24px rgba(140, 60, 220, 0.25);
+      box-shadow: 0 0 28px rgba(140, 40, 220, 0.35);
       overflow: hidden;
     }
     canvas {
@@ -39,7 +39,7 @@
       top: 10px;
       left: 50%;
       transform: translateX(-50%);
-      background: rgba(140, 0, 16, 0.88);
+      background: rgba(155, 0, 18, 0.9);
       color: #fff;
       padding: 4px 10px;
       font-size: 0.78rem;
@@ -56,7 +56,7 @@
       max-width: 720px;
     }
     button, select {
-      background: #161021;
+      background: #140e1f;
       color: #e6d8f7;
       border: 1px solid #4e3273;
       padding: 6px 10px;
@@ -68,10 +68,10 @@
     #telemetry {
       width: 100%;
       max-width: 720px;
-      background: #0f0b17;
+      background: #0d0914;
       border: 1px solid #2b1d40;
       padding: 8px 10px;
-      font-size: 0.8rem;
+      font-size: 0.78rem;
       line-height: 1.45;
     }
   </style>
@@ -105,7 +105,7 @@
       <option value="ARETAK">Aretak (Creature)</option>
       <option value="PARGON">Pargon (Amplify 1.5x)</option>
     </select>
-    <button id="audio-btn">🔊 Enable Waveguide Audio</button>
+    <button id="audio-btn">🔊 Enable Ritual Soundscape</button>
     <button id="reset-btn">↺ Purge Circle</button>
   </div>
 
@@ -148,7 +148,7 @@
         for (let i = 0; i < out.length; i++) out[i] = pcm[i] / 32768;
       };
       node.connect(audioCtx.destination);
-      audioBtn.textContent = '🔊 Waveguide Active';
+      audioBtn.textContent = '🔊 Ritual Soundscape Active';
     });
 
     function resetCircle() {
@@ -164,16 +164,15 @@
       const nx = q16Clamp((((e.clientX - rect.left) / rect.width) * Q16_ONE) | 0, 0, Q16_ONE);
       const ny = q16Clamp((((e.clientY - rect.top) / rect.height) * Q16_ONE) | 0, 0, Q16_ONE);
 
-      // Ripple the 4x4 De Casteljau tidal surface
-      circle.patch.applyBrushImpulse(nx, ny, isTap ? 45000 : 14000);
+      // Strong tactile wave impulse on the 4x4 Bezier manifold
+      circle.patch.applyBrushImpulse(nx, ny, isTap ? 65536 : 24000);
 
       if (isTap) {
-        // Check if player tapped near a Circle of Power vertex
         for (let i = 0; i < circle.pointCount; i++) {
           const v = circle.nodeCoords[i];
           const du = Math.abs(v.u - nx);
           const dv = Math.abs(v.v - ny);
-          if (du < 4500 && dv < 6500) {
+          if (du < 5500 && dv < 7500) {
             const runeKey = runeSelect.value;
             circle.inscribeRune(i, runeKey);
             const rune = RUNE_CODEX[runeKey];
@@ -195,9 +194,17 @@
 
     function frame() {
       const state = circle.step();
-      fb.renderTidalSurface(circle.patch, dominantAlign);
+      fb.renderTidalSurface(circle.patch, dominantAlign, state.dirichletEnergyQ16);
 
-      // Draw Circle of Power edges
+      const bankBase = (dominantAlign & 3) << 6;
+      const cx = FB_WIDTH >> 1;
+      const cy = FB_HEIGHT >> 1;
+
+      // Double concentric Circle of Power bounding rings
+      fb.drawCircleOutline(cx, cy, 98, bankBase + 38, 48);
+      fb.drawCircleOutline(cx, cy, 104, bankBase + 28, 48);
+
+      // Draw Circle of Power N-gon circuit & star chords
       for (let i = 0; i < circle.pointCount; i++) {
         const a = circle.nodeCoords[i];
         const b = circle.nodeCoords[(i + 1) % circle.pointCount];
@@ -205,19 +212,34 @@
         const y0 = (a.v * FB_HEIGHT) >> 16;
         const x1 = (b.u * FB_WIDTH) >> 16;
         const y1 = (b.v * FB_HEIGHT) >> 16;
-        const glow = q16Clamp(38 + (circle.edgeFluxQ16[i] >> 12), 38, 63);
-        fb.drawLine(x0, y0, x1, y1, ((dominantAlign & 3) << 6) + glow);
+        const glow = q16Clamp(44 + (circle.edgeFluxQ16[i] >> 12), 44, 63);
+        fb.drawLine(x0, y0, x1, y1, bankBase + glow);
+
+        // Star chords for 5, 7, 9 point circles
+        if (circle.pointCount >= 5) {
+          const c = circle.nodeCoords[(i + 2) % circle.pointCount];
+          const x2 = (c.u * FB_WIDTH) >> 16;
+          const y2 = (c.v * FB_HEIGHT) >> 16;
+          fb.drawLine(x0, y0, x2, y2, bankBase + 30);
+        }
       }
 
-      // Draw rune nodes
+      // Draw rune nodes + inscribed Eternal Darkness geometric sigils
       for (let i = 0; i < circle.pointCount; i++) {
         const v = circle.nodeCoords[i];
-        const cx = (v.u * FB_WIDTH) >> 16;
-        const cy = (v.v * FB_HEIGHT) >> 16;
+        const vx = (v.u * FB_WIDTH) >> 16;
+        const vy = (v.v * FB_HEIGHT) >> 16;
         const slot = circle.slots[i];
         const bank = slot && slot.type === 'ALIGNMENT' ? slot.align : dominantAlign;
-        const colorIdx = ((bank & 3) << 6) + (slot ? 62 : 28);
-        fb.drawCircle(cx, cy, slot ? 8 : 5, colorIdx);
+        const nodeBank = (bank & 3) << 6;
+
+        // Dark socket backdrop + glowing sigil
+        fb.drawFilledCircle(vx, vy, 12, nodeBank + 8);
+        if (slot) {
+          fb.drawRuneGlyph(vx, vy, slot.id, nodeBank + 62);
+        } else {
+          fb.drawCircleOutline(vx, vy, 7, nodeBank + 36, 16);
+        }
       }
 
       // Apply Ledger 2 Sanity Hallucinations
@@ -242,7 +264,8 @@
 
       requestAnimationFrame(frame);
     }
-    requestAnimationFrame(frame);
-  </script>
-</body>
-</html>
+
+requestAnimationFrame(frame);
+
+
+
