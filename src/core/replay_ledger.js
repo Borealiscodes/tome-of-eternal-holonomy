@@ -4,54 +4,52 @@ const RUNE_KEYS = Object.keys(RUNE_CODEX);
 export const OP_INSCRIBE = 1;
 export const OP_BRUSH = 2;
 
-/**
- * Deterministic < 4 KB Input Ledger & Bit-Exact State Verifier
- * Guarantees Ledger 1 cosmology state is 100% reproducible regardless of Ledger 2 glitches.
- */
 export class ReplayLedger {
   constructor(pointCount = 5) {
     this.pointCount = pointCount;
-    this.events = []; // [tick, op, a, b, c]
+    this.events = [];
   }
 
   recordInscribe(tick, slotIdx, runeKey) {
     const runeIdx = RUNE_KEYS.indexOf(runeKey);
     if (runeIdx >= 0) {
-      this.events.push([tick | 0, OP_INSCRIBE, slotIdx | 0, runeIdx, 0]);
+      this.events.push(Array.of(tick | 0, OP_INSCRIBE, slotIdx | 0, runeIdx, 0));
     }
   }
 
   recordBrush(tick, uQ16, vQ16, forceQ16) {
-    this.events.push([tick | 0, OP_BRUSH, uQ16 | 0, vQ16 | 0, forceQ16 | 0]);
+    this.events.push(Array.of(tick | 0, OP_BRUSH, uQ16 | 0, vQ16 | 0, forceQ16 | 0));
   }
 
-  /** Serialize into compact < 4 KB JSON/CSV payload */
   serialize() {
-    const lines = [`V1,${this.pointCount}`];
+    const lines = Array.of('V1,' + this.pointCount);
     for (const ev of this.events) {
       lines.push(ev.join(','));
     }
     return lines.join('\n');
   }
 
-  /** Deterministically replay log from tick 0..totalTicks and return FNV-1a state digest */
   static verifyReplay(serializedLog, totalTicks) {
     const lines = serializedLog.trim().split('\n');
-    const [, countStr] = lines[0].split(',');
-    const circle = new CircleOfPower(Number(countStr));
+    const headerParts = lines.at(0).split(',');
+    const circle = new CircleOfPower(Number(headerParts.at(1)));
 
     const parsed = [];
     for (let i = 1; i < lines.length; i++) {
-      if (!lines[i]) continue;
-      parsed.push(lines[i].split(',').map(Number));
+      if (!lines.at(i)) continue;
+      parsed.push(lines.at(i).split(',').map(Number));
     }
 
     let cursor = 0;
     for (let t = 0; t <= totalTicks; t++) {
-      while (cursor < parsed.length && parsed[cursor][0] === t) {
-        const [, op, a, b, c] = parsed[cursor++];
+      while (cursor < parsed.length && parsed.at(cursor).at(0) === t) {
+        const ev = parsed.at(cursor++);
+        const op = ev.at(1);
+        const a = ev.at(2);
+        const b = ev.at(3);
+        const c = ev.at(4);
         if (op === OP_INSCRIBE) {
-          circle.inscribeRune(a, RUNE_KEYS[b]);
+          circle.inscribeRune(a, RUNE_KEYS.at(b));
         } else if (op === OP_BRUSH) {
           circle.patch.applyBrushImpulse(a, b, c);
         }
@@ -65,7 +63,6 @@ export class ReplayLedger {
     };
   }
 
-  /** Bit-exact 32-bit FNV-1a digest over all Ledger 1 Q16.16 state arrays */
   static computeStateDigest(circle) {
     let hash = 0x811c9dc5;
     const mix32 = (v) => {
@@ -82,9 +79,9 @@ export class ReplayLedger {
     mix32(circle.sheaf.sanityQ16);
     mix32(circle.sheaf.dirichletEnergyQ16);
     for (const stalk of circle.sheaf.stalks) {
-      for (let c = 0; c < 4; c++) mix32(stalk[c]);
+      for (let c = 0; c < 4; c++) mix32(stalk.at(c));
     }
-    for (let i = 0; i < 16; i++) mix32(circle.patch.heights[i]);
+    for (let i = 0; i < 16; i++) mix32(circle.patch.heights.at(i));
 
     return (hash >>> 0).toString(16).padStart(8, '0');
   }

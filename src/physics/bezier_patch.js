@@ -1,21 +1,13 @@
 import { Q16_ONE, Q16_HALF, q16Mul, q16Clamp } from '../core/q16.js';
 
-/**
- * 4x4 Q16.16 De Casteljau Bicubic Bezier Patch & Damped Integer Spring Grid
- * Drives both tactile spell-drawing currents and 3D cosmic manifold distortion.
- */
 export class BezierTidalPatch {
   constructor() {
-    // 16 control point heights and velocities in Q16.16
     this.heights = new Int32Array(16);
     this.velocities = new Int32Array(16);
-
-    // Damped spring constants in Q16.16
     this.stiffnessQ16 = 3276; // ~0.05
     this.dampingQ16 = 60293;  // ~0.92
   }
 
-  /** Inject a tactile brush impulse at normalized Q16.16 coordinates (u, v) in [0, 65536] */
   applyBrushImpulse(uQ16, vQ16, forceQ16) {
     const gx = q16Clamp((uQ16 * 3) >> 16, 0, 3);
     const gy = q16Clamp((vQ16 * 3) >> 16, 0, 3);
@@ -30,7 +22,6 @@ export class BezierTidalPatch {
     }
   }
 
-  /** Advance integer spring physics by 1 tick */
   step() {
     for (let i = 0; i < 16; i++) {
       const h = this.heights[i];
@@ -40,7 +31,6 @@ export class BezierTidalPatch {
     }
   }
 
-  /** 1D 4-point De Casteljau interpolation in Q16.16 */
   static evalCubic1D(p0, p1, p2, p3, tQ16) {
     const invT = Q16_ONE - tQ16;
     const q0 = q16Mul(p0, invT) + q16Mul(p1, tQ16);
@@ -53,19 +43,18 @@ export class BezierTidalPatch {
     return q16Mul(r0, invT) + q16Mul(r1, tQ16);
   }
 
-  /** Evaluate surface height S(u, v) in Q16.16 */
   evaluate(uQ16, vQ16) {
-    const col0 = BezierTidalPatch.evalCubic1D(this.heights[0], this.heights[1], this.heights[2], this.heights[3], uQ16);
-    const col1 = BezierTidalPatch.evalCubic1D(this.heights[4], this.heights[5], this.heights[6], this.heights[7], uQ16);
-    const col2 = BezierTidalPatch.evalCubic1D(this.heights[8], this.heights[9], this.heights[10], this.heights[11], uQ16);
-    const col3 = BezierTidalPatch.evalCubic1D(this.heights[12], this.heights[13], this.heights[14], this.heights[15], uQ16);
+    const h = this.heights;
+    const col0 = BezierTidalPatch.evalCubic1D(h[0], h[1], h[2], h[3], uQ16);
+    const col1 = BezierTidalPatch.evalCubic1D(h[4], h[5], h[6], h[7], uQ16);
+    const col2 = BezierTidalPatch.evalCubic1D(h[8], h[9], h[10], h[11], uQ16);
+    const col3 = BezierTidalPatch.evalCubic1D(h[12], h[13], h[14], h[15], uQ16);
 
     return BezierTidalPatch.evalCubic1D(col0, col1, col2, col3, vQ16);
   }
 
-  /** Compute finite-difference gradient slope ∇S_Q16 = [dS/du, dS/dv] for astral flow */
   gradient(uQ16, vQ16) {
-    const eps = 1024; // ~0.0156
+    const eps = 1024;
     const uPlus = q16Clamp(uQ16 + eps, 0, Q16_ONE);
     const uMinus = q16Clamp(uQ16 - eps, 0, Q16_ONE);
     const vPlus = q16Clamp(vQ16 + eps, 0, Q16_ONE);

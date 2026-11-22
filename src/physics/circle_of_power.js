@@ -3,30 +3,28 @@ import { ALIGN, CosmologySheaf } from '../core/sheaf_cosmology.js';
 import { BezierTidalPatch } from './bezier_patch.js';
 
 export const RUNE_CODEX = {
-  // Alignments
-  CHATTURGHA: { id: 'CHATTURGHA', type: 'ALIGNMENT', align: ALIGN.CHATTURGHA, label: 'Chattur\'gha' },
+  CHATTURGHA: { id: 'CHATTURGHA', type: 'ALIGNMENT', align: ALIGN.CHATTURGHA, label: "Chattur'gha" },
   ULYAOTH:    { id: 'ULYAOTH',    type: 'ALIGNMENT', align: ALIGN.ULYAOTH,    label: 'Ulyaoth' },
-  XELLOTATH:  { id: 'XELLOTATH',  type: 'ALIGNMENT', align: ALIGN.XELLOTATH,  label: 'Xel\'lotath' },
+  XELLOTATH:  { id: 'XELLOTATH',  type: 'ALIGNMENT', align: ALIGN.XELLOTATH,  label: "Xel'lotath" },
   MANTOROK:   { id: 'MANTOROK',   type: 'ALIGNMENT', align: ALIGN.MANTOROK,   label: 'Mantorok' },
 
-  // Verbs
   ANTORBOK:   { id: 'ANTORBOK',   type: 'VERB', powerQ16: 65536,  label: 'Antorbok (Project)' },
   BANKOROK:   { id: 'BANKOROK',   type: 'VERB', powerQ16: 78643,  label: 'Bankorok (Protect)' },
   TIER:       { id: 'TIER',       type: 'VERB', powerQ16: 98304,  label: 'Tier (Summon)' },
   NAROKATH:   { id: 'NAROKATH',   type: 'VERB', powerQ16: 85197,  label: 'Narokath (Absorb)' },
 
-  // Nouns
   REDGORMOR:  { id: 'REDGORMOR',  type: 'NOUN', powerQ16: 65536,  label: 'Redgormor (Area)' },
   MAGORMOR:   { id: 'MAGORMOR',   type: 'NOUN', powerQ16: 72090,  label: 'Magormor (Item)' },
   ARETAK:     { id: 'ARETAK',     type: 'NOUN', powerQ16: 91750,  label: 'Aretak (Creature)' },
 
-  // Amplifier
   PARGON:     { id: 'PARGON',     type: 'AMPLIFIER', multiplierQ16: 98304, label: 'Pargon (Power 1.5x)' }
 };
 
+const VALID_POINT_COUNTS = new Set([3, 5, 7, 9]);
+
 export class CircleOfPower {
   constructor(pointCount = 3) {
-    if (![3, 5, 7, 9].includes(pointCount)) {
+    if (!VALID_POINT_COUNTS.has(pointCount)) {
       throw new Error('Circle of Power must have 3, 5, 7, or 9 points.');
     }
     this.pointCount = pointCount;
@@ -34,15 +32,13 @@ export class CircleOfPower {
     this.patch = new BezierTidalPatch();
     this.slots = new Array(pointCount).fill(null);
     this.nodeCoords = this._computePolygonCoords(pointCount);
-    this.edgeFluxQ16 = new Int32Array(pointCount); // Astral energy accumulated per edge
+    this.edgeFluxQ16 = new Int32Array(pointCount);
 
-    // Connect outer ring edges (0->1->...->N-1->0)
     for (let i = 0; i < pointCount; i++) {
       this.sheaf.addEdge(i, (i + 1) % pointCount, Q16_ONE);
     }
   }
 
-  /** Place N-gon vertices in normalized [0, 65536] Q16.16 space using Bhaskara trig */
   _computePolygonCoords(n) {
     const coords = [];
     const radius = 22937; // ~0.35 in Q16.16
@@ -55,7 +51,6 @@ export class CircleOfPower {
     return coords;
   }
 
-  /** Inscribe a rune from RUNE_CODEX into vertex slotIdx */
   inscribeRune(slotIdx, runeKey) {
     const rune = RUNE_CODEX[runeKey];
     if (!rune || slotIdx < 0 || slotIdx >= this.pointCount) return false;
@@ -65,7 +60,6 @@ export class CircleOfPower {
     if (rune.type === 'ALIGNMENT') {
       this.sheaf.setNodeAlignment(slotIdx, rune.align, Q16_ONE);
     } else if (rune.type === 'AMPLIFIER') {
-      // Pargon amplifies adjacent edges in the sheaf
       for (const edge of this.sheaf.edges) {
         if (edge.u === slotIdx || edge.v === slotIdx) {
           edge.weightQ16 = q16Mul(edge.weightQ16, rune.multiplierQ16);
@@ -75,7 +69,6 @@ export class CircleOfPower {
     return true;
   }
 
-  /** Advance tidal brush physics, transfer astral flux along edges, and step sheaf */
   step() {
     this.patch.step();
 
@@ -89,7 +82,6 @@ export class CircleOfPower {
       const dirU = b.u - a.u;
       const dirV = b.v - a.v;
 
-      // Dot product of tidal slope ∇S and edge vector drives astral charge along circuit
       const flow = Math.abs(q16Mul(grad.dSdu, dirU) + q16Mul(grad.dSdv, dirV));
       this.edgeFluxQ16[i] += flow >> 2;
     }
@@ -97,7 +89,6 @@ export class CircleOfPower {
     return this.sheaf.step();
   }
 
-  /** Evaluate spell potency and dominant alignment once runes are inscribed */
   evaluateSpell() {
     let alignmentRune = null;
     let verbRune = null;
