@@ -3,200 +3,109 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Tome of Eternal Holonomy — Q16.16 Runic Cosmology</title>
+  <title>Tome of Eternal Holonomy — Corrupted Ritual Canvas</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      background: #050308;
-      color: #d8cce8;
-      font-family: monospace;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 10px;
-      gap: 8px;
-    }
-    h1 { font-size: 1rem; letter-spacing: 0.08em; color: #c48cff; text-align: center; }
-    #viewport-wrap {
-      position: relative;
-      width: 100%;
-      max-width: 720px;
-      aspect-ratio: 480 / 272;
-      border: 2px solid #3c2459;
-      box-shadow: 0 0 28px rgba(140, 40, 220, 0.35);
-      overflow: hidden;
-    }
-    canvas {
-      width: 100%;
-      height: 100%;
-      image-rendering: pixelated;
-      display: block;
-      touch-action: none;
-      cursor: crosshair;
-    }
-    #hallucination-banner {
-      position: absolute;
-      top: 10px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: rgba(155, 0, 18, 0.92);
-      color: #fff;
-      padding: 4px 10px;
-      font-size: 0.76rem;
-      border: 1px solid #ff4d6d;
-      display: none;
-      white-space: nowrap;
-      pointer-events: none;
-    }
-    .controls {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-      justify-content: center;
-      max-width: 720px;
-    }
-    button, select {
-      background: #140e1f;
-      color: #e6d8f7;
-      border: 1px solid #4e3273;
-      padding: 6px 9px;
-      font-family: monospace;
-      font-size: 0.78rem;
-      cursor: pointer;
-    }
-    button:hover { background: #261a3b; }
-    #telemetry {
-      width: 100%;
-      max-width: 720px;
-      background: #0d0914;
-      border: 1px solid #2b1d40;
-      padding: 8px 10px;
-      font-size: 0.76rem;
-      line-height: 1.45;
-    }
-    details.grimoire {
-      width: 100%;
-      max-width: 720px;
-      background: #0b0812;
-      border: 1px solid #3c2459;
-      padding: 8px 10px;
-      font-size: 0.76rem;
-      line-height: 1.5;
-    }
-    details.grimoire summary {
-      cursor: pointer;
-      color: #c48cff;
-      font-weight: bold;
-      letter-spacing: 0.04em;
-    }
-    .grimoire-grid {
-      margin-top: 8px;
-      display: grid;
-      gap: 8px;
-    }
-    .grimoire h3 { color: #e2b8ff; font-size: 0.8rem; margin-bottom: 2px; }
-    .preset-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+    body { background: #050308; color: #d8cce8; font-family: monospace; display: flex; flex-direction: column; align-items: center; padding: 10px; gap: 8px; }
+    h1 { font-size: 0.98rem; letter-spacing: 0.08em; color: #c48cff; text-align: center; }
+    #viewport-wrap { position: relative; width: 100%; max-width: 720px; aspect-ratio: 480 / 272; border: 2px solid #4e3273; box-shadow: 0 0 32px rgba(155, 50, 240, 0.35); overflow: hidden; }
+    canvas { width: 100%; height: 100%; image-rendering: pixelated; display: block; touch-action: none; cursor: crosshair; }
+    #chant-overlay { position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%); background: rgba(10, 5, 18, 0.85); color: #f3d9ff; padding: 4px 12px; font-size: 0.85rem; letter-spacing: 0.14em; border: 1px solid #7b4db8; display: none; pointer-events: none; text-transform: uppercase; }
+    #hallucination-banner { position: absolute; top: 8px; left: 50%; transform: translateX(-50%); background: rgba(155, 0, 18, 0.92); color: #fff; padding: 4px 10px; font-size: 0.75rem; display: none; pointer-events: none; }
+    .controls, .preset-row { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; max-width: 720px; }
+    button, select { background: #140e1f; color: #e6d8f7; border: 1px solid #4e3273; padding: 6px 9px; font-family: monospace; font-size: 0.78rem; cursor: pointer; }
+    button.active-mode { border-color: #d580ff; background: #2d1847; color: #fff; }
+    #telemetry, details.grimoire { width: 100%; max-width: 720px; background: #0d0914; border: 1px solid #2b1d40; padding: 8px; font-size: 0.76rem; line-height: 1.45; }
+    details.grimoire summary { cursor: pointer; color: #c48cff; font-weight: bold; }
   </style>
 </head>
 <body>
-  <h1>👁️ TOME OF ETERNAL HOLONOMY (Q16.16)</h1>
-
+  <h1>👁️ TOME OF ETERNAL HOLONOMY — CORRUPTED RITUAL CANVAS</h1>
   <div id="viewport-wrap">
     <canvas id="screen" width="480" height="272"></canvas>
     <div id="hallucination-banner"></div>
+    <div id="chant-overlay"></div>
   </div>
-
   <div class="controls">
-    <select id="circle-size" aria-label="Circle of Power Points">
+    <select id="circle-size">
       <option value="3">3-Point Circle</option>
       <option value="5" selected>5-Point Circle</option>
       <option value="7">7-Point Circle</option>
       <option value="9">9-Point Circle</option>
     </select>
-    <select id="rune-select" aria-label="Select Rune">
-      <option value="CHATTURGHA">[1. Align] Chattur'gha (Matter / Red)</option>
-      <option value="ULYAOTH">[1. Align] Ulyaoth (Magick / Blue)</option>
-      <option value="XELLOTATH">[1. Align] Xel'lotath (Sanity / Green)</option>
-      <option value="MANTOROK">[1. Align] Mantorok (Bind / Purple)</option>
-      <option value="ANTORBOK">[2. Verb] Antorbok (Project)</option>
-      <option value="BANKOROK">[2. Verb] Bankorok (Protect)</option>
-      <option value="TIER">[2. Verb] Tier (Summon)</option>
-      <option value="NAROKATH">[2. Verb] Narokath (Absorb)</option>
-      <option value="REDGORMOR">[3. Noun] Redgormor (Area)</option>
-      <option value="MAGORMOR">[3. Noun] Magormor (Item)</option>
-      <option value="ARETAK">[3. Noun] Aretak (Creature)</option>
-      <option value="PARGON">[4. Boost] Pargon (Amplify 1.5x)</option>
+    <button id="mode-btn" class="active-mode">🖌️ Mode: Shodo Brush Draw</button>
+    <select id="rune-select">
+      <option value="CHATTURGHA">[Align] Chattur'gha (Red)</option>
+      <option value="ULYAOTH">[Align] Ulyaoth (Blue)</option>
+      <option value="XELLOTATH">[Align] Xel'lotath (Green)</option>
+      <option value="MANTOROK">[Align] Mantorok (Purple)</option>
+      <option value="ANTORBOK">[Verb] Antorbok (Project)</option>
+      <option value="BANKOROK">[Verb] Bankorok (Protect)</option>
+      <option value="TIER">[Verb] Tier (Summon)</option>
+      <option value="NAROKATH">[Verb] Narokath (Absorb)</option>
+      <option value="REDGORMOR">[Noun] Redgormor (Area)</option>
+      <option value="MAGORMOR">[Noun] Magormor (Item)</option>
+      <option value="ARETAK">[Noun] Aretak (Creature)</option>
+      <option value="PARGON">[Boost] Pargon (1.5x)</option>
     </select>
-    <button id="audio-btn">🔊 Enable Ritual Audio</button>
-    <button id="reset-btn">↺ Purge Circle</button>
+    <button id="cast-btn">🕯️ Chant &amp; Cast Ritual</button>
+    <button id="audio-btn">🔊 Enable Audio</button>
+    <button id="reset-btn">↺ Purge</button>
   </div>
-
-  <div id="telemetry" role="status" aria-live="polite">Booting Q16.16 Engine...</div>
-
+  <div id="telemetry">Booting Q16.16 3D Manifold...</div>
   <details class="grimoire" open>
-    <summary>📖 TOME GRIMOIRE: HOW TO CAST RUNICK MAGICK & PRESETS</summary>
-    <div class="grimoire-grid">
-      <div>
-        <h3>1. Runic Spell Formula</h3>
-        A valid spell requires <strong>1 Alignment + 1 Verb + 1 Noun</strong> inscribed onto the Circle of Power vertices (tap any socket on the canvas). Fill remaining sockets with <strong>Pargon</strong> to multiply potency by 1.5x per rune. Drag across the field to ripple the astral tide.
-      </div>
-      <div>
-        <h3>2. The Four Alignments (Cellular Sheaf Tension)</h3>
-        <strong>Chattur'gha</strong> (Red/Flesh) beats <strong>Xel'lotath</strong> (Green/Mind) beats <strong>Ulyaoth</strong> (Blue/Magick) beats <strong>Chattur'gha</strong>. Mixing opposing Ancients spikes <em>Dirichlet Tension (ℰ)</em>, draining Sanity and triggering visual/audio hallucinations. <strong>Mantorok</strong> (Purple/Corpse-God) binds and stabilizes conflicts.
-      </div>
-      <div>
-        <h3>3. One-Tap Grimoire Rituals (Learn by Casting)</h3>
-        <div class="preset-row">
-          <button data-preset="ENCHANT">⚔️ Enchant Item (3-Pt)</button>
-          <button data-preset="DAMAGE_FIELD">🔥 Amplified Magick Attack (5-Pt)</button>
-          <button data-preset="SUMMON_HORROR">👁️ Summon Horror (7-Pt)</button>
-          <button data-preset="SANITY_FRACTURE">🩸 Cosmic Discord / Sanity Drain (5-Pt)</button>
-        </div>
+    <summary>📖 GRIMOIRE: SHODO GESTURES &amp; EMBEDDED RITUALS</summary>
+    <div style="margin-top:6px;">
+      <p><strong>Shodo Brush Gestures (Draw on Canvas):</strong> Circle <code>○</code> = <strong>Pargon</strong> | V-Shape <code>∨</code> = <strong>Chattur'gha</strong> | Diamond <code>◇</code> = <strong>Ulyaoth</strong> | Vertical <code>|</code> = <strong>Antorbok</strong> | Horizontal <code>—</code> = <strong>Bankorok</strong> | Cross <code>✕</code> = <strong>Mantorok</strong> | Zig-Zag = <strong>Xel'lotath</strong>.</p>
+      <p style="margin-top:4px;"><strong>Embodied Ritual Casting:</strong> Tap <strong>🕯️ Chant &amp; Cast Ritual</strong> (or a preset below) to invoke each rune one by one with occult voice pacing and 3D manifold shockwaves.</p>
+      <div class="preset-row" style="margin-top:6px;">
+        <button data-preset="ENCHANT">⚔️ Enchant Item (3-Pt)</button>
+        <button data-preset="DAMAGE_FIELD">🔥 Magick Attack (5-Pt)</button>
+        <button data-preset="SUMMON_HORROR">👁️ Summon Horror (7-Pt)</button>
+        <button data-preset="SANITY_FRACTURE">🩸 Cosmic Discord / Sanity Drain (5-Pt)</button>
       </div>
     </div>
   </details>
-
   <script type="module">
     import { Q16_ONE, Q16_HALF, q16Clamp } from './src/core/q16.js';
     import { ALIGN } from './src/core/sheaf_cosmology.js';
     import { CircleOfPower, RUNE_CODEX } from './src/physics/circle_of_power.js';
+    import { ShodoRuneBrush } from './src/physics/shodo_rune_brush.js';
     import { RetroFramebuffer, FB_WIDTH, FB_HEIGHT } from './src/render/bayer_clut8.js';
     import { SanityHallucinator } from './src/render/sanity_glitches.js';
     import { CosmologySoundscape } from './src/audio/formant_whisper.js';
 
     const telemetry = document.getElementById('telemetry');
-    window.addEventListener('error', (ev) => {
-      telemetry.textContent = 'RUNTIME ERR: ' + ev.message;
-    });
-
     const canvas = document.getElementById('screen');
     const ctx = canvas.getContext('2d');
     const imgData = ctx.createImageData(FB_WIDTH, FB_HEIGHT);
     const imgU32 = new Uint32Array(imgData.data.buffer);
-
     const banner = document.getElementById('hallucination-banner');
+    const chantBox = document.getElementById('chant-overlay');
     const sizeSelect = document.getElementById('circle-size');
     const runeSelect = document.getElementById('rune-select');
+    const modeBtn = document.getElementById('mode-btn');
+    const castBtn = document.getElementById('cast-btn');
     const audioBtn = document.getElementById('audio-btn');
     const resetBtn = document.getElementById('reset-btn');
 
     let circle = new CircleOfPower(5);
     let dominantAlign = ALIGN.MANTOROK;
+    let brushMode = true;
+    let activeRitualIdx = -1;
+    let ritualTimer = null;
+
+    const brush = new ShodoRuneBrush();
     const fb = new RetroFramebuffer();
     const hallucinator = new SanityHallucinator();
     const soundscape = new CosmologySoundscape(22050);
-
-    // Give initial ripple so Bayer manifold contours are immediately visible on boot
     circle.patch.applyBrushImpulse(Q16_HALF, Q16_HALF, Q16_ONE);
 
     let audioCtx = null;
     function unlockAudio() {
-      if (audioCtx) {
-        if (audioCtx.state === 'suspended') audioCtx.resume();
-        return;
-      }
-      const AudioContextCtor = window.AudioContext || window.webkitAudioContext;
-      audioCtx = new AudioContextCtor({ sampleRate: 22050 });
+      if (audioCtx) { if (audioCtx.state === 'suspended') audioCtx.resume(); return; }
+      const Ctor = window.AudioContext || window.webkitAudioContext;
+      audioCtx = new Ctor({ sampleRate: 22050 });
       const node = audioCtx.createScriptProcessor(1024, 0, 1);
       node.onaudioprocess = (e) => {
         const out = e.outputBuffer.getChannelData(0);
@@ -204,11 +113,65 @@
         for (let i = 0; i < out.length; i++) out[i] = pcm[i] / 32768;
       };
       node.connect(audioCtx.destination);
-      audioBtn.textContent = '🔊 Ritual Audio Active';
+      audioBtn.textContent = '🔊 Audio Active';
     }
     audioBtn.addEventListener('click', unlockAudio);
 
+    function speakOccultWord(word, sanityQ16) {
+      if (!('speechSynthesis' in window)) return;
+      window.speechSynthesis.cancel();
+      const u = new SpeechSynthesisUtterance(word.toLowerCase());
+      const sanityRatio = sanityQ16 / Q16_ONE;
+      u.pitch = Math.max(0.15, 0.42 * sanityRatio); // Deep occult pitch, drops lower as sanity fractures
+      u.rate = 0.72;
+      u.volume = 0.95;
+      window.speechSynthesis.speak(u);
+    }
+
+    function startSequentialRitual() {
+      if (ritualTimer) clearInterval(ritualTimer);
+      unlockAudio();
+      let stepIdx = 0;
+      const runStep = () => {
+        while (stepIdx < circle.pointCount && !circle.slots.at(stepIdx)) stepIdx++;
+        if (stepIdx >= circle.pointCount) {
+          activeRitualIdx = -1;
+          chantBox.textContent = '✦ RITUAL SEALED — MANIFOLD DISCHARGE ✦';
+          circle.patch.applyBrushImpulse(Q16_HALF, Q16_HALF, Q16_ONE * 3);
+          soundscape.triggerRuneIncantation(dominantAlign, circle.sheaf.sanityQ16, circle.sheaf.dirichletEnergyQ16 + 32768);
+          setTimeout(() => { chantBox.style.display = 'none'; }, 1400);
+          clearInterval(ritualTimer);
+          ritualTimer = null;
+          return;
+        }
+        activeRitualIdx = stepIdx;
+        const slot = circle.slots.at(stepIdx);
+        const v = circle.nodeCoords.at(stepIdx);
+        const align = slot.type === 'ALIGNMENT' ? slot.align : dominantAlign;
+        if (slot.type === 'ALIGNMENT') dominantAlign = slot.align;
+
+        chantBox.style.display = 'block';
+        chantBox.textContent = '⚡ ' + slot.id + '...';
+        circle.patch.applyBrushImpulse(v.u, v.v, Q16_ONE * 2);
+        soundscape.triggerRuneIncantation(align, circle.sheaf.sanityQ16, circle.sheaf.dirichletEnergyQ16);
+        speakOccultWord(slot.id, circle.sheaf.sanityQ16);
+        stepIdx++;
+      };
+      runStep();
+      ritualTimer = setInterval(runStep, 720);
+    }
+    castBtn.addEventListener('click', startSequentialRitual);
+
+    modeBtn.addEventListener('click', () => {
+      brushMode = !brushMode;
+      modeBtn.textContent = brushMode ? '🖌️ Mode: Shodo Brush Draw' : '👆 Mode: Tap Socket + Select';
+      modeBtn.classList.toggle('active-mode', brushMode);
+    });
+
     function resetCircle(pts) {
+      if (ritualTimer) { clearInterval(ritualTimer); ritualTimer = null; }
+      activeRitualIdx = -1;
+      chantBox.style.display = 'none';
       const count = pts || Number(sizeSelect.value);
       sizeSelect.value = String(count);
       circle = new CircleOfPower(count);
@@ -218,24 +181,11 @@
     sizeSelect.addEventListener('change', () => resetCircle());
     resetBtn.addEventListener('click', () => resetCircle());
 
-    // Preset Rituals from the Grimoire
     const PRESETS = {
-      ENCHANT: {
-        pts: 3,
-        runes: Array.of('ULYAOTH', 'ANTORBOK', 'MAGORMOR')
-      },
-      DAMAGE_FIELD: {
-        pts: 5,
-        runes: Array.of('CHATTURGHA', 'PARGON', 'ANTORBOK', 'PARGON', 'REDGORMOR')
-      },
-      SUMMON_HORROR: {
-        pts: 7,
-        runes: Array.of('XELLOTATH', 'PARGON', 'TIER', 'PARGON', 'ARETAK', 'PARGON', 'MANTOROK')
-      },
-      SANITY_FRACTURE: {
-        pts: 5,
-        runes: Array.of('CHATTURGHA', 'XELLOTATH', 'ULYAOTH', 'TIER', 'REDGORMOR')
-      }
+      ENCHANT: { pts: 3, runes: Array.of('ULYAOTH', 'ANTORBOK', 'MAGORMOR') },
+      DAMAGE_FIELD: { pts: 5, runes: Array.of('CHATTURGHA', 'PARGON', 'ANTORBOK', 'PARGON', 'REDGORMOR') },
+      SUMMON_HORROR: { pts: 7, runes: Array.of('XELLOTATH', 'PARGON', 'TIER', 'PARGON', 'ARETAK', 'PARGON', 'MANTOROK') },
+      SANITY_FRACTURE: { pts: 5, runes: Array.of('CHATTURGHA', 'XELLOTATH', 'ULYAOTH', 'TIER', 'REDGORMOR') }
     };
 
     document.querySelectorAll('button[data-preset]').forEach((btn) => {
@@ -244,86 +194,118 @@
         if (!p) return;
         resetCircle(p.pts);
         for (let i = 0; i < p.runes.length; i++) {
-          const rk = p.runes.at(i);
-          circle.inscribeRune(i, rk);
-          const rune = RUNE_CODEX[rk];
-          if (rune && rune.type === 'ALIGNMENT') dominantAlign = rune.align;
+          circle.inscribeRune(i, p.runes.at(i));
         }
-        circle.patch.applyBrushImpulse(Q16_HALF, Q16_HALF, Q16_ONE * 2);
-        soundscape.triggerRuneIncantation(
-          dominantAlign,
-          circle.sheaf.sanityQ16,
-          circle.sheaf.dirichletEnergyQ16
-        );
+        startSequentialRitual();
       });
     });
 
     let dragging = false;
-    function handlePointer(e, isTap) {
+    function toCanvasCoords(e) {
       const rect = canvas.getBoundingClientRect();
+      const sx = (((e.clientX - rect.left) / rect.width) * FB_WIDTH) | 0;
+      const sy = (((e.clientY - rect.top) / rect.height) * FB_HEIGHT) | 0;
       const nx = q16Clamp((((e.clientX - rect.left) / rect.width) * Q16_ONE) | 0, 0, Q16_ONE);
       const ny = q16Clamp((((e.clientY - rect.top) / rect.height) * Q16_ONE) | 0, 0, Q16_ONE);
+      return { sx, sy, nx, ny };
+    }
 
-circle.patch.applyBrushImpulse(nx, ny, isTap ? 65536 : 24000);
-if (isTap) {
-for (let i = 0; i < circle.pointCount; i++) {
-const v = circle.nodeCoords.at(i);
-const du = Math.abs(v.u - nx);
-const dv = Math.abs(v.v - ny);
-if (du < 6500 && dv < 8500) {
-const runeKey = runeSelect.value;
-circle.inscribeRune(i, runeKey);
-const rune = RUNE_CODEX[runeKey];
-if (rune.type === 'ALIGNMENT') dominantAlign = rune.align;
-soundscape.triggerRuneIncantation(
-dominantAlign,
-circle.sheaf.sanityQ16,
-circle.sheaf.dirichletEnergyQ16
-);
-break;
-}
-}
-}
-}
-canvas.addEventListener('pointerdown', (e) => { dragging = true; handlePointer(e, true); });
-canvas.addEventListener('pointermove', (e) => { if (dragging) handlePointer(e, false); });
-window.addEventListener('pointerup', () => { dragging = false; });
-function frame() {
-const state = circle.step();
-fb.renderTidalSurface(circle.patch, dominantAlign, state.dirichletEnergyQ16);
-const bankBase = (dominantAlign & 3) << 6;
-const cx = FB_WIDTH >> 1;
-const cy = FB_HEIGHT >> 1;
-fb.drawCircleOutline(cx, cy, 98, bankBase + 40, 48);
-fb.drawCircleOutline(cx, cy, 104, bankBase + 30, 48);
-for (let i = 0; i < circle.pointCount; i++) {
-const a = circle.nodeCoords.at(i);
-const b = circle.nodeCoords.at((i + 1) % circle.pointCount);
-const x0 = (a.u * FB_WIDTH) >> 16;
-const y0 = (a.v * FB_HEIGHT) >> 16;
-const x1 = (b.u * FB_WIDTH) >> 16;
-const y1 = (b.v * FB_HEIGHT) >> 16;
-const glow = q16Clamp(46 + (circle.edgeFluxQ16[i] >> 12), 46, 63);
-fb.drawLine(x0, y0, x1, y1, bankBase + glow);
-if (circle.pointCount >= 5) {
-const c = circle.nodeCoords.at((i + 2) % circle.pointCount);
-const x2 = (c.u * FB_WIDTH) >> 16;
-const y2 = (c.v * FB_HEIGHT) >> 16;
-fb.drawLine(x0, y0, x2, y2, bankBase + 32);
-}
-}
-for (let i = 0; i < circle.pointCount; i++) {
-const v = circle.nodeCoords.at(i);
-const vx = (v.u * FB_WIDTH) >> 16;
-const vy = (v.v * FB_HEIGHT) >> 16;
-const slot = circle.slots.at(i);
+    canvas.addEventListener('pointerdown', (e) => {
+      dragging = true;
+      const c = toCanvasCoords(e);
+      circle.patch.applyBrushImpulse(c.nx, c.ny, 48000);
+      if (brushMode) {
+        brush.beginStroke(c.sx, c.sy);
+      } else {
+        // Tap closest 3D-projected node
+        for (let i = 0; i < circle.pointCount; i++) {
+          const v = circle.nodeCoords.at(i);
+          const p = fb.project3D(v.u, v.v, circle.patch.evaluate(v.u, v.v));
+          if (Math.hypot(p.sx - c.sx, p.sy - c.sy) < 22) {
+            const rk = runeSelect.value;
+            circle.inscribeRune(i, rk);
+            const rune = RUNE_CODEX[rk];
+            if (rune.type === 'ALIGNMENT') dominantAlign = rune.align;
+            soundscape.triggerRuneIncantation(dominantAlign, circle.sheaf.sanityQ16, circle.sheaf.dirichletEnergyQ16);
+            speakOccultWord(rk, circle.sheaf.sanityQ16);
+            break;
+          }
+        }
+      }
+    });
+
+    canvas.addEventListener('pointermove', (e) => {
+      if (!dragging) return;
+      const c = toCanvasCoords(e);
+      circle.patch.applyBrushImpulse(c.nx, c.ny, 18000);
+      if (brushMode) brush.addPoint(c.sx, c.sy);
+    });
+
+    window.addEventListener('pointerup', () => {
+      if (!dragging) return;
+      dragging = false;
+      if (brushMode) {
+        const recognized = brush.classifyAndClear();
+        if (recognized) {
+          // Place recognized Shodo rune into next empty slot (or slot 0)
+          let targetSlot = circle.slots.findIndex((s) => s === null);
+          if (targetSlot < 0) targetSlot = 0;
+          circle.inscribeRune(targetSlot, recognized);
+          const rune = RUNE_CODEX[recognized];
+          if (rune && rune.type === 'ALIGNMENT') dominantAlign = rune.align;
+          chantBox.style.display = 'block';
+          chantBox.textContent = '🖌️ SHODO INSCRIBED: ' + recognized;
+          setTimeout(() => { if (!ritualTimer) chantBox.style.display = 'none'; }, 1200);
+          soundscape.triggerRuneIncantation(dominantAlign, circle.sheaf.sanityQ16, circle.sheaf.dirichletEnergyQ16);
+          speakOccultWord(recognized, circle.sheaf.sanityQ16);
+        }
+      }
+    });
+
+    function frame() {
+      const state = circle.step();
+      // Gentle 3D orbital drift accelerated by Dirichlet tension
+      const orbitSpeed = 95 + (state.dirichletEnergyQ16 >> 10);
+      fb.renderTidalSurface(circle.patch, dominantAlign, orbitSpeed);
+
+      const bankBase = (dominantAlign & 3) << 6;
+      const projNodes = new Array(circle.pointCount);
+      for (let i = 0; i < circle.pointCount; i++) {
+        const v = circle.nodeCoords.at(i);
+        projNodes[i] = fb.project3D(v.u, v.v, circle.patch.evaluate(v.u, v.v));
+      }
+
+      // 3D-embedded Circle of Power edges & star chords
+      for (let i = 0; i < circle.pointCount; i++) {
+        const p0 = projNodes.at(i);
+        const p1 = projNodes.at((i + 1) % circle.pointCount);
+        const glow = q16Clamp(48 + (circle.edgeFluxQ16[i] >> 12), 48, 63);
+        fb.drawLine(p0.sx, p0.sy, p1.sx, p1.sy, bankBase + glow);
+        if (circle.pointCount >= 5) {
+          const p2 = projNodes.at((i + 2) % circle.pointCount);
+          fb.drawLine(p0.sx, p0.sy, p2.sx, p2.sy, bankBase + 36);
+        }
+      }
+
+      // 3D-embedded Rune Sockets + Sequential Ritual Pulse
+      for (let i = 0; i < circle.pointCount; i++) {
+        const p = projNodes.at(i);
+        const slot = circle.slots.at(i);
+
 const bank = slot && slot.type === 'ALIGNMENT' ? slot.align : dominantAlign;
 const nodeBank = (bank & 3) << 6;
-fb.drawFilledCircle(vx, vy, 12, nodeBank + 8);
-if (slot) {
-fb.drawRuneGlyph(vx, vy, slot.id, nodeBank + 62);
-} else {
-fb.drawCircleOutline(vx, vy, 7, nodeBank + 38, 16);
+const isChanting = (i === activeRitualIdx);
+fb.drawFilledCircle(p.sx, p.sy, isChanting ? 15 : 11, nodeBank + (isChanting ? 24 : 6));
+if (isChanting) fb.drawCircleOutline(p.sx, p.sy, 19, nodeBank + 63, 20);
+if (slot) fb.drawRuneGlyph(p.sx, p.sy, slot.id, nodeBank + 63);
+else fb.drawCircleOutline(p.sx, p.sy, 7, nodeBank + 42, 16);
+}
+// Draw live Shodo ink trail while drawing
+if (brushMode && brush.points.length > 1) {
+for (let i = 1; i < brush.points.length; i++) {
+const a = brush.points.at(i - 1), b = brush.points.at(i);
+fb.drawLine(a.x, a.y, b.x, b.y, bankBase + 63);
+fb.drawLine(a.x + 1, a.y, b.x + 1, b.y, bankBase + 54);
 }
 }
 const warning = hallucinator.apply(fb, state.sanityQ16, state.dirichletEnergyQ16);
@@ -339,18 +321,14 @@ imgU32.set(fb.resolveRGBA32());
 ctx.putImageData(imgData, 0, 0);
 const spell = circle.evaluateSpell();
 const sanityPct = ((state.sanityQ16 * 100) >> 16);
-const potencyFloat = (spell.potencyQ16 / 65536).toFixed(2);
+const potency = (spell.potencyQ16 / 65536).toFixed(2);
 telemetry.textContent =
-'Sanity: ' + sanityPct + '% | Dirichlet Tension ℰ: ' + state.dirichletEnergyQ16 +
-' | Spell: ' + (spell.valid ? 'ACTIVE (' + potencyFloat + 'x)' : 'INCOMPLETE') +
-' [' + (spell.incantation || 'Tap vertices or pick a Grimoire Preset below') + ']';
+'Sanity: ' + sanityPct + '% | Dirichlet ℰ: ' + state.dirichletEnergyQ16 +
+' | Spell: ' + (spell.valid ? 'ACTIVE (' + potency + 'x)' : 'INCOMPLETE') +
+' [' + (spell.incantation || 'Draw Shodo runes or pick a Grimoire Preset') + ']';
 requestAnimationFrame(frame);
 }
 requestAnimationFrame(frame);
 
 
 
-
-  </script>
-</body>
-</html>
