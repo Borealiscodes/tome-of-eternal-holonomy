@@ -56,8 +56,7 @@
   <details class="grimoire" open>
     <summary>📖 GRIMOIRE: SHODO GESTURES &amp; EMBEDDED RITUALS</summary>
     <div style="margin-top:6px;">
-      <p><strong>Shodo Brush Gestures (Draw on Canvas):</strong> Circle <code>○</code> = <strong>Pargon</strong> | V-Shape <code>∨</code> = <strong>Chattur'gha</strong> | Diamond <code>◇</code> = <strong>Ulyaoth</strong> | Vertical <code>|</code> = <strong>Antorbok</strong> | Horizontal <code>—</code> = <strong>Bankorok</strong> | Cross <code>✕</code> = <strong>Mantorok</strong> | Zig-Zag = <strong>Xel'lotath</strong>.</p>
-      <p style="margin-top:4px;"><strong>Embodied Ritual Casting:</strong> Tap <strong>🕯️ Chant &amp; Cast Ritual</strong> (or a preset below) to invoke each rune one by one with occult voice pacing and 3D manifold shockwaves.</p>
+      <p><strong>Shodo Brush Gestures:</strong> Circle <code>○</code> = <strong>Pargon</strong> | V-Shape <code>∨</code> = <strong>Chattur'gha</strong> | Diamond <code>◇</code> = <strong>Ulyaoth</strong> | Vertical <code>|</code> = <strong>Antorbok</strong> | Horizontal <code>—</code> = <strong>Bankorok</strong> | Cross <code>✕</code> = <strong>Mantorok</strong> | Zig-Zag = <strong>Xel'lotath</strong>.</p>
       <div class="preset-row" style="margin-top:6px;">
         <button data-preset="ENCHANT">⚔️ Enchant Item (3-Pt)</button>
         <button data-preset="DAMAGE_FIELD">🔥 Magick Attack (5-Pt)</button>
@@ -121,8 +120,7 @@
       if (!('speechSynthesis' in window)) return;
       window.speechSynthesis.cancel();
       const u = new SpeechSynthesisUtterance(word.toLowerCase());
-      const sanityRatio = sanityQ16 / Q16_ONE;
-      u.pitch = Math.max(0.15, 0.42 * sanityRatio); // Deep occult pitch, drops lower as sanity fractures
+      u.pitch = Math.max(0.15, 0.42 * (sanityQ16 / Q16_ONE));
       u.rate = 0.72;
       u.volume = 0.95;
       window.speechSynthesis.speak(u);
@@ -161,7 +159,6 @@
       ritualTimer = setInterval(runStep, 720);
     }
     castBtn.addEventListener('click', startSequentialRitual);
-
     modeBtn.addEventListener('click', () => {
       brushMode = !brushMode;
       modeBtn.textContent = brushMode ? '🖌️ Mode: Shodo Brush Draw' : '👆 Mode: Tap Socket + Select';
@@ -193,9 +190,7 @@
         const p = PRESETS[btn.dataset.preset];
         if (!p) return;
         resetCircle(p.pts);
-        for (let i = 0; i < p.runes.length; i++) {
-          circle.inscribeRune(i, p.runes.at(i));
-        }
+        for (let i = 0; i < p.runes.length; i++) circle.inscribeRune(i, p.runes.at(i));
         startSequentialRitual();
       });
     });
@@ -217,7 +212,6 @@
       if (brushMode) {
         brush.beginStroke(c.sx, c.sy);
       } else {
-        // Tap closest 3D-projected node
         for (let i = 0; i < circle.pointCount; i++) {
           const v = circle.nodeCoords.at(i);
           const p = fb.project3D(v.u, v.v, circle.patch.evaluate(v.u, v.v));
@@ -247,7 +241,6 @@
       if (brushMode) {
         const recognized = brush.classifyAndClear();
         if (recognized) {
-          // Place recognized Shodo rune into next empty slot (or slot 0)
           let targetSlot = circle.slots.findIndex((s) => s === null);
           if (targetSlot < 0) targetSlot = 0;
           circle.inscribeRune(targetSlot, recognized);
@@ -264,7 +257,6 @@
 
     function frame() {
       const state = circle.step();
-      // Gentle 3D orbital drift accelerated by Dirichlet tension
       const orbitSpeed = 95 + (state.dirichletEnergyQ16 >> 10);
       fb.renderTidalSurface(circle.patch, dominantAlign, orbitSpeed);
 
@@ -275,7 +267,6 @@
         projNodes[i] = fb.project3D(v.u, v.v, circle.patch.evaluate(v.u, v.v));
       }
 
-      // 3D-embedded Circle of Power edges & star chords
       for (let i = 0; i < circle.pointCount; i++) {
         const p0 = projNodes.at(i);
         const p1 = projNodes.at((i + 1) % circle.pointCount);
@@ -287,48 +278,50 @@
         }
       }
 
-      // 3D-embedded Rune Sockets + Sequential Ritual Pulse
       for (let i = 0; i < circle.pointCount; i++) {
         const p = projNodes.at(i);
         const slot = circle.slots.at(i);
+        const bank = slot && slot.type === 'ALIGNMENT' ? slot.align : dominantAlign;
+        const nodeBank = (bank & 3) << 6;
+        const isChanting = (i === activeRitualIdx);
 
-const bank = slot && slot.type === 'ALIGNMENT' ? slot.align : dominantAlign;
-const nodeBank = (bank & 3) << 6;
-const isChanting = (i === activeRitualIdx);
-fb.drawFilledCircle(p.sx, p.sy, isChanting ? 15 : 11, nodeBank + (isChanting ? 24 : 6));
-if (isChanting) fb.drawCircleOutline(p.sx, p.sy, 19, nodeBank + 63, 20);
-if (slot) fb.drawRuneGlyph(p.sx, p.sy, slot.id, nodeBank + 63);
-else fb.drawCircleOutline(p.sx, p.sy, 7, nodeBank + 42, 16);
-}
-// Draw live Shodo ink trail while drawing
-if (brushMode && brush.points.length > 1) {
-for (let i = 1; i < brush.points.length; i++) {
-const a = brush.points.at(i - 1), b = brush.points.at(i);
-fb.drawLine(a.x, a.y, b.x, b.y, bankBase + 63);
-fb.drawLine(a.x + 1, a.y, b.x + 1, b.y, bankBase + 54);
-}
-}
-const warning = hallucinator.apply(fb, state.sanityQ16, state.dirichletEnergyQ16);
-if (warning) {
-banner.textContent = warning;
-banner.style.display = 'block';
-canvas.style.transform = 'rotate(' + (((state.dirichletEnergyQ16 >> 15) % 5) - 2) + 'deg)';
-} else {
-banner.style.display = 'none';
-canvas.style.transform = 'none';
-}
-imgU32.set(fb.resolveRGBA32());
-ctx.putImageData(imgData, 0, 0);
-const spell = circle.evaluateSpell();
-const sanityPct = ((state.sanityQ16 * 100) >> 16);
-const potency = (spell.potencyQ16 / 65536).toFixed(2);
-telemetry.textContent =
-'Sanity: ' + sanityPct + '% | Dirichlet ℰ: ' + state.dirichletEnergyQ16 +
-' | Spell: ' + (spell.valid ? 'ACTIVE (' + potency + 'x)' : 'INCOMPLETE') +
-' [' + (spell.incantation || 'Draw Shodo runes or pick a Grimoire Preset') + ']';
-requestAnimationFrame(frame);
-}
-requestAnimationFrame(frame);
+        fb.drawFilledCircle(p.sx, p.sy, isChanting ? 15 : 11, nodeBank + (isChanting ? 24 : 6));
+        if (isChanting) fb.drawCircleOutline(p.sx, p.sy, 19, nodeBank + 63, 20);
+        if (slot) fb.drawRuneGlyph(p.sx, p.sy, slot.id, nodeBank + 63);
+        else fb.drawCircleOutline(p.sx, p.sy, 7, nodeBank + 42, 16);
+      }
 
+      if (brushMode && brush.points.length > 1) {
+        for (let i = 1; i < brush.points.length; i++) {
+          const a = brush.points.at(i - 1), b = brush.points.at(i);
+          fb.drawLine(a.x, a.y, b.x, b.y, bankBase + 63);
+          fb.drawLine(a.x + 1, a.y, b.x + 1, b.y, bankBase + 54);
+        }
+      }
 
+      const warning = hallucinator.apply(fb, state.sanityQ16, state.dirichletEnergyQ16);
+      if (warning) {
+        banner.textContent = warning;
+        banner.style.display = 'block';
+        canvas.style.transform = 'rotate(' + (((state.dirichletEnergyQ16 >> 15) % 5) - 2) + 'deg)';
+      } else {
+        banner.style.display = 'none';
+        canvas.style.transform = 'none';
+      }
 
+      imgU32.set(fb.resolveRGBA32());
+      ctx.putImageData(imgData, 0, 0);
+
+      const spell = circle.evaluateSpell();
+      const sanityPct = ((state.sanityQ16 * 100) >> 16);
+      const potency = (spell.potencyQ16 / 65536).toFixed(2);
+      telemetry.textContent =
+        'Sanity: ' + sanityPct + '% | Dirichlet ℰ: ' + state.dirichletEnergyQ16 +
+        ' | Spell: ' + (spell.valid ? 'ACTIVE (' + potency + 'x)' : 'INCOMPLETE') +
+        ' [' + (spell.incantation || 'Draw Shodo runes or pick a Grimoire Preset') + ']';
+      requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
+  </script>
+</body>
+</html>
