@@ -4,6 +4,6 @@
   "type": "module",
   "description": "Zero-float Q16.16 deterministic cosmology and runic magick engine",
   "scripts": {
-    "test": "node tests/sheaf_equilibrium_test.js"
+    "test": "node tests/sheaf_equilibrium_test.js && node tests/circle_physics_test.js"
   }
 }
