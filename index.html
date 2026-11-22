@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tome of Eternal Holonomy — Q16.16 Runic Cosmology</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #07050a;
+      color: #d8cce8;
+      font-family: monospace;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 12px;
+      gap: 10px;
+    }
+    h1 { font-size: 1.1rem; letter-spacing: 0.08em; color: #c48cff; text-align: center; }
+    #viewport-wrap {
+      position: relative;
+      width: 100%;
+      max-width: 720px;
+      aspect-ratio: 480 / 272;
+      border: 2px solid #3c2459;
+      box-shadow: 0 0 24px rgba(140, 60, 220, 0.25);
+      overflow: hidden;
+    }
+    canvas {
+      width: 100%;
+      height: 100%;
+      image-rendering: pixelated;
+      display: block;
+      touch-action: none;
+      cursor: crosshair;
+    }
+    #hallucination-banner {
+      position: absolute;
+      top: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(140, 0, 16, 0.88);
+      color: #fff;
+      padding: 4px 10px;
+      font-size: 0.78rem;
+      border: 1px solid #ff4d6d;
+      display: none;
+      white-space: nowrap;
+      pointer-events: none;
+    }
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      justify-content: center;
+      max-width: 720px;
+    }
+    button, select {
+      background: #161021;
+      color: #e6d8f7;
+      border: 1px solid #4e3273;
+      padding: 6px 10px;
+      font-family: monospace;
+      font-size: 0.82rem;
+      cursor: pointer;
+    }
+    button:hover { background: #261a3b; }
+    #telemetry {
+      width: 100%;
+      max-width: 720px;
+      background: #0f0b17;
+      border: 1px solid #2b1d40;
+      padding: 8px 10px;
+      font-size: 0.8rem;
+      line-height: 1.45;
+    }
+  </style>
+</head>
+<body>
+  <h1>👁️ TOME OF ETERNAL HOLONOMY (Q16.16)</h1>
+
+  <div id="viewport-wrap">
+    <canvas id="screen" width="480" height="272"></canvas>
+    <div id="hallucination-banner"></div>
+  </div>
+
+  <div class="controls">
+    <select id="circle-size" aria-label="Circle of Power Points">
+      <option value="3">3-Point Circle</option>
+      <option value="5" selected>5-Point Circle</option>
+      <option value="7">7-Point Circle</option>
+      <option value="9">9-Point Circle</option>
+    </select>
+    <select id="rune-select" aria-label="Select Rune">
+      <option value="CHATTURGHA">Chattur'gha (Matter / Red)</option>
+      <option value="ULYAOTH">Ulyaoth (Magick / Blue)</option>
+      <option value="XELLOTATH">Xel'lotath (Sanity / Green)</option>
+      <option value="MANTOROK">Mantorok (Bind / Purple)</option>
+      <option value="ANTORBOK">Antorbok (Project)</option>
+      <option value="BANKOROK">Bankorok (Protect)</option>
+      <option value="TIER">Tier (Summon)</option>
+      <option value="NAROKATH">Narokath (Absorb)</option>
+      <option value="REDGORMOR">Redgormor (Area)</option>
+      <option value="MAGORMOR">Magormor (Item)</option>
+      <option value="ARETAK">Aretak (Creature)</option>
+      <option value="PARGON">Pargon (Amplify 1.5x)</option>
+    </select>
+    <button id="audio-btn">🔊 Enable Waveguide Audio</button>
+    <button id="reset-btn">↺ Purge Circle</button>
+  </div>
+
+  <div id="telemetry" role="status" aria-live="polite">Initializing Q16.16 Sheaf...</div>
+
+  <script type="module">
+    import { Q16_ONE, q16Clamp } from './src/core/q16.js';
+    import { ALIGN } from './src/core/sheaf_cosmology.js';
+    import { CircleOfPower, RUNE_CODEX } from './src/physics/circle_of_power.js';
+    import { RetroFramebuffer, FB_WIDTH, FB_HEIGHT } from './src/render/bayer_clut8.js';
+    import { SanityHallucinator } from './src/render/sanity_glitches.js';
+    import { CosmologySoundscape } from './src/audio/formant_whisper.js';
+
+    const canvas = document.getElementById('screen');
+    const ctx = canvas.getContext('2d');
+    const imgData = ctx.createImageData(FB_WIDTH, FB_HEIGHT);
+    const imgU32 = new Uint32Array(imgData.data.buffer);
+
+    const banner = document.getElementById('hallucination-banner');
+    const telemetry = document.getElementById('telemetry');
+    const sizeSelect = document.getElementById('circle-size');
+    const runeSelect = document.getElementById('rune-select');
+    const audioBtn = document.getElementById('audio-btn');
+    const resetBtn = document.getElementById('reset-btn');
+
+    let circle = new CircleOfPower(5);
+    let dominantAlign = ALIGN.MANTOROK;
+    const fb = new RetroFramebuffer();
+    const hallucinator = new SanityHallucinator();
+    const soundscape = new CosmologySoundscape(22050);
+
+    let audioCtx = null;
+    audioBtn.addEventListener('click', () => {
+      if (audioCtx) return;
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 22050 });
+      const node = audioCtx.createScriptProcessor(1024, 0, 1);
+      node.onaudioprocess = (e) => {
+        const out = e.outputBuffer.getChannelData(0);
+        const pcm = soundscape.renderBlock(out.length, circle.sheaf.sanityQ16);
+        for (let i = 0; i < out.length; i++) out[i] = pcm[i] / 32768;
+      };
+      node.connect(audioCtx.destination);
+      audioBtn.textContent = '🔊 Waveguide Active';
+    });
+
+    function resetCircle() {
+      circle = new CircleOfPower(Number(sizeSelect.value));
+      dominantAlign = ALIGN.MANTOROK;
+    }
+    sizeSelect.addEventListener('change', resetCircle);
+    resetBtn.addEventListener('click', resetCircle);
+
+    let dragging = false;
+    function handlePointer(e, isTap) {
+      const rect = canvas.getBoundingClientRect();
+      const nx = q16Clamp((((e.clientX - rect.left) / rect.width) * Q16_ONE) | 0, 0, Q16_ONE);
+      const ny = q16Clamp((((e.clientY - rect.top) / rect.height) * Q16_ONE) | 0, 0, Q16_ONE);
+
+      // Ripple the 4x4 De Casteljau tidal surface
+      circle.patch.applyBrushImpulse(nx, ny, isTap ? 45000 : 14000);
+
+      if (isTap) {
+        // Check if player tapped near a Circle of Power vertex
+        for (let i = 0; i < circle.pointCount; i++) {
+          const v = circle.nodeCoords[i];
+          const du = Math.abs(v.u - nx);
+          const dv = Math.abs(v.v - ny);
+          if (du < 4500 && dv < 6500) {
+            const runeKey = runeSelect.value;
+            circle.inscribeRune(i, runeKey);
+            const rune = RUNE_CODEX[runeKey];
+            if (rune.type === 'ALIGNMENT') dominantAlign = rune.align;
+            soundscape.triggerRuneIncantation(
+              dominantAlign,
+              circle.sheaf.sanityQ16,
+              circle.sheaf.dirichletEnergyQ16
+            );
+            break;
+          }
+        }
+      }
+    }
+
+    canvas.addEventListener('pointerdown', (e) => { dragging = true; handlePointer(e, true); });
+    canvas.addEventListener('pointermove', (e) => { if (dragging) handlePointer(e, false); });
+    window.addEventListener('pointerup', () => { dragging = false; });
+
+    function frame() {
+      const state = circle.step();
+      fb.renderTidalSurface(circle.patch, dominantAlign);
+
+      // Draw Circle of Power edges
+      for (let i = 0; i < circle.pointCount; i++) {
+        const a = circle.nodeCoords[i];
+        const b = circle.nodeCoords[(i + 1) % circle.pointCount];
+        const x0 = (a.u * FB_WIDTH) >> 16;
+        const y0 = (a.v * FB_HEIGHT) >> 16;
+        const x1 = (b.u * FB_WIDTH) >> 16;
+        const y1 = (b.v * FB_HEIGHT) >> 16;
+        const glow = q16Clamp(38 + (circle.edgeFluxQ16[i] >> 12), 38, 63);
+        fb.drawLine(x0, y0, x1, y1, ((dominantAlign & 3) << 6) + glow);
+      }
+
+      // Draw rune nodes
+      for (let i = 0; i < circle.pointCount; i++) {
+        const v = circle.nodeCoords[i];
+        const cx = (v.u * FB_WIDTH) >> 16;
+        const cy = (v.v * FB_HEIGHT) >> 16;
+        const slot = circle.slots[i];
+        const bank = slot && slot.type === 'ALIGNMENT' ? slot.align : dominantAlign;
+        const colorIdx = ((bank & 3) << 6) + (slot ? 62 : 28);
+        fb.drawCircle(cx, cy, slot ? 8 : 5, colorIdx);
+      }
+
+      // Apply Ledger 2 Sanity Hallucinations
+      const warning = hallucinator.apply(fb, state.sanityQ16, state.dirichletEnergyQ16);
+      if (warning) {
+        banner.textContent = warning;
+        banner.style.display = 'block';
+        canvas.style.transform = `rotate(${((state.dirichletEnergyQ16 >> 15) % 5) - 2}deg)`;
+      } else {
+        banner.style.display = 'none';
+        canvas.style.transform = 'none';
+      }
+
+      imgU32.set(fb.resolveRGBA32());
+      ctx.putImageData(imgData, 0, 0);
+
+      const spell = circle.evaluateSpell();
+      const sanityPct = ((state.sanityQ16 * 100) >> 16);
+      telemetry.textContent =
+        `Sanity: ${sanityPct}% (${state.sanityQ16} Q16) | Dirichlet Tension ℰ: ${state.dirichletEnergyQ16} | ` +
+        `Spell: ${spell.valid ? 'ACTIVE' : 'INCOMPLETE'} [${spell.incantation || 'Tap vertices to inscribe'}]`;
+
+      requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
+  </script>
+</body>
+</html>
